@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 import requests
+import json
 #import redis
 #from rsmq import RedisSMQ
 
@@ -37,7 +38,7 @@ def obtener_redes_sociales_selenium(url):
         return []
 
 def enviar_a_redis_rsmq(informacion):
-    data = {"data", informacion}
+    data = {"data": informacion}
     response = requests.post(node_url, json=data)
     print(response.text)
     #redis_client = redis.StrictRedis(host='172.17.0.2', port=6379, decode_responses=True)
@@ -63,3 +64,4 @@ print("Redes sociales (Selenium):", redes_sociales_selenium)
 # Enviar la información a Redis RSMQ
 informacion = "\n".join(redes_sociales_selenium)
 enviar_a_redis_rsmq(informacion)
+

@@ -35,8 +35,9 @@ app.post('/data', (req, res) => {
   res.status(200).send('Información recibida correctamente');
 });
 
-app.get('/',()=>{
+app.get('/',(_,res)=>{
     res.status(200).send('Hola mundo');
+    
 })
 
 // Iniciar el servidor
