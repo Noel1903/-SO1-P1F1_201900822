@@ -1,0 +1,26 @@
+FROM python:3.10
+
+
+WORKDIR /-SO1-P1F1_201900822
+
+# Instala las herramientas necesarias (wget)
+RUN apt-get update \
+    && apt-get install -y wget firefox-esr \
+    && rm -rf /var/lib/apt/lists/*
+
+# Descarga geckodriver y colócalo en /usr/local/bin/
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz  \
+    && tar -xvzf geckodriver-v0.33.0-linux64.tar.gz \
+    && mv geckodriver /usr/local/bin/ \
+    && chmod +x /usr/local/bin/geckodriver \
+    && rm geckodriver-v0.33.0-linux64.tar.gz
+
+COPY scrappers/requirements.txt /-SO1-P1F1_201900822/requirements.txt
+COPY seleniumapi/api_selenium.py /-SO1-P1F1_201900822/api_selenium.py
+
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+EXPOSE 5000
+
+CMD ["python", "api_selenium.py"]

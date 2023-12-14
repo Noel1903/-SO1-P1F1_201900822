@@ -3,8 +3,8 @@ from playwright.async_api import async_playwright
 
 async def obtener_redes_sociales_playwright(url):
     async with async_playwright() as p:
-        #browser = await p.chromium.launch(headless=False) # Abre una ventana
-        browser = await p.chromium.launch() # No abre una ventana
+        browser = await p.chromium.launch(headless=False) # Abre una ventana
+        #browser = await p.chromium.launch() # No abre una ventana
         page = await browser.new_page()
         await page.goto(url)
 
