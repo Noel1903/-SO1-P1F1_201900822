@@ -8,7 +8,7 @@ const port = 6000;
 
 // Configuración de Redis RSMQ
 const rsmq = new RedisSMQ({ host: '172.17.0.2', port: 6379 });
-
+//list_data = []
 // Middleware para parsear el cuerpo de las solicitudes como JSON
 const corsOptions = {
     origin: 'http://localhost:5000',

@@ -2,10 +2,10 @@
 FROM python:3.9-slim-buster
 
 # Establece el directorio de trabajo
-WORKDIR /app
+WORKDIR /-SO1-P1F1_201900822
 
 # Copia el script Playwright al contenedor
-COPY scraping_script.py /app/scraping_script.py
+COPY /Playwright/scraping_script.py /Playwright/scraping_script.py
 
 # Instala Playwright y las dependencias necesarias
 RUN pip install playwright
@@ -19,4 +19,4 @@ RUN apt-get update && \
                        libcairo2 libasound2
 
 # Comando para ejecutar el script
-CMD ["python3", "scraping_script.py"]
+CMD ["python3", "/Playwright/scraping_script.py"]

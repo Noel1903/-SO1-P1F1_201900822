@@ -8,6 +8,15 @@ services:
       - redis
     networks:
       - mi_red
+
+  python_app_2:
+    build:
+      context: .
+      dockerfile: ./Playwright/Dockerfile
+    depends_on:
+      - redis
+    networks:
+      - mi_red 
   nodejs_app:
     build:
       context: .
