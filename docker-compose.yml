@@ -1,0 +1,32 @@
+version: "3"
+services:
+  python_app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile_selenium
+    depends_on:
+      - redis
+    networks:
+      - mi_red
+  nodejs_app:
+    build:
+      context: .
+      dockerfile: ./redis/Dockerfile
+    ports:
+      - "6000:6000"
+    depends_on:
+      - redis
+    networks:
+      - mi_red
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    networks:
+      - mi_red
+
+networks:
+  mi_red:
+    driver: bridge
+
