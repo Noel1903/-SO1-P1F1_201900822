@@ -3,8 +3,8 @@ from playwright.async_api import async_playwright
 
 async def obtener_redes_sociales_playwright(url):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False) # Abre una ventana
-        #browser = await p.chromium.launch() # No abre una ventana
+        #browser = await p.chromium.launch(headless=False) # Abre una ventana
+        browser = await p.chromium.launch() # No abre una ventana
         page = await browser.new_page()
         await page.goto(url)
 
@@ -23,3 +23,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+#['https://www.facebook.com/CocaColaCoEspana/', 'https://twitter.com/CocaColaCo_es', 'https://www.youtube.com/CocaColaJourneyES', 'https://www.instagram.com/cocacolaco_es/?hl=es%C3%A7']

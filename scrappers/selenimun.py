@@ -4,7 +4,7 @@ from selenium.webdriver.firefox.options import Options
 def obtener_redes_sociales_selenium(url):
     print("Selenium")
     options = Options()
-    #options.add_argument('--headless') 
+    options.add_argument('--headless') 
     driver = webdriver.Firefox(options=options)
     driver.get(url)
 
