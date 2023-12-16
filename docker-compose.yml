@@ -27,7 +27,7 @@ services:
       - redis
     networks:
       - mi_red
-
+   
   redis:
     image: "redis:latest"
     ports:
