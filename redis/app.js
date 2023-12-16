@@ -47,6 +47,23 @@ app.post('/data_selenium', async (req, res) => {
   res.status(200).send('Información recibida correctamente');
 });
 
+
+
+app.post('/data_play', async (req, res) => {
+  const informacion = req.body.data;
+  //informacion = JSON.stringify(informacion);
+  // Realizar acciones adicionales con la información recibida
+  console.log('Información recibida:', informacion);
+  //console.log("Obteniendo información en rmsq")
+  // Recupera información de Redis RSMQ (ejemplo de datos)
+  const datosRedis = ['Dato 1', 'Dato 2', 'Dato 3'];
+
+  // Genera el informe PDF con los datos de Redis RSMQ y la información adicional
+  const pdfFileName = await generarPDFPlay([], informacion);
+
+  res.status(200).send('Información recibida correctamente');
+});
+
 app.get('/',(_,res)=>{
     res.status(200).send('Hola mundo');
     
@@ -62,6 +79,29 @@ async function generarPDF(datos, informacion) {
 
   // Personaliza el contenido del PDF según tus datos y la información adicional
   doc.text('Informe PDF basado en datos de Redis RSMQ y la información de Selenium:', 50, 50);
+  doc.text(`Información adicional: ${informacion}`, 50, 70);
+
+  datos.forEach((linea, indice) => {
+    doc.text(`${indice + 1}. ${linea}`, 50, 100 + indice * 20);
+  });
+
+  // Cierra el flujo de escritura antes de devolver el nombre del archivo
+  doc.pipe(pdfStream);
+  doc.end();
+
+  await new Promise(resolve => pdfStream.on('finish', resolve));
+
+  console.log(`Informe PDF generado: ${pdfFileName}`);
+  return pdfFileName;
+}
+
+async function generarPDFPlay(datos, informacion) {
+  const pdfFileName = 'informe_play.pdf';
+  const doc = new PDFDocument();
+  const pdfStream = fs.createWriteStream(pdfFileName);
+
+  // Personaliza el contenido del PDF según tus datos y la información adicional
+  doc.text('Informe PDF basado en datos de Redis RSMQ y la información de Playwright:', 50, 50);
   doc.text(`Información adicional: ${informacion}`, 50, 70);
 
   datos.forEach((linea, indice) => {

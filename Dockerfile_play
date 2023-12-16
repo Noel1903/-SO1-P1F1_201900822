@@ -5,7 +5,6 @@ FROM python:3.9-slim-buster
 WORKDIR /-SO1-P1F1_201900822
 
 # Copia el script Playwright al contenedor
-COPY /Playwright/scraping_script.py /Playwright/scraping_script.py
 
 # Instala Playwright y las dependencias necesarias
 RUN pip install playwright
@@ -18,5 +17,9 @@ RUN apt-get update && \
                        libxfixes3 libxrandr2 libgbm1 libpango-1.0-0 \
                        libcairo2 libasound2
 
+COPY scrappers/requirements.txt /-SO1-P1F1_201900822/requirements.txt
+COPY Playwright/api_playwright.py /-SO1-P1F1_201900822/api_playwright.py
+
+RUN pip install --no-cache-dir -r requirements.txt
 # Comando para ejecutar el script
-CMD ["python3", "/Playwright/scraping_script.py"]
+CMD ["python", "api_playwright.py"]

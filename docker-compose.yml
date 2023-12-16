@@ -12,7 +12,7 @@ services:
   python_app_2:
     build:
       context: .
-      dockerfile: ./Playwright/Dockerfile
+      dockerfile: ./Dockerfile_play
     depends_on:
       - redis
     networks:

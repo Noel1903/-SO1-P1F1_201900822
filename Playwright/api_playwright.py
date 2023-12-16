@@ -1,9 +1,11 @@
 import time
 import asyncio
+import requests,json
 from playwright.async_api import async_playwright
 import re
+from flask import Flask, request, jsonify
 
-node_url = 'http://nodejs_app:6000/data'
+node_url = 'http://nodejs_app:6000/data_play'
 lista_redes_sociales = []
 
 pattern_facebook = re.compile(r'^https?://(?:www\.)?facebook\.com/[a-zA-Z0-9.]+/?$')
@@ -76,47 +78,82 @@ async def obtener_redes_sociales_playwright(url):
 
     return resultados
 
-async def main():
-    url_pagina = "https://www.tacobell.com.gt"
+async def init(url):
+    data_play = []
+    url_pagina = url
     redes_sociales_playwright = await obtener_redes_sociales_playwright(url_pagina)
     lista_redes_sociales = redes_sociales_playwright.copy()
     #Obtener toda la informacion desde facebook
     url_facebook = obtener_url_facebook(lista_redes_sociales)
     if url_facebook is None:
+        data_play.append("Esta empresa no tiene pagina de facebook")
         print("Esta empresa no tiene pagina de facebook")
     else:
         xpath_ejemplo = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[1]/div[2]/div/div/div/div[3]/div/div/div[2]/span/a[1]"
         resultado = await obtener_likes_con_xpath(url_facebook, xpath_ejemplo)
         print("seguidores facebook", resultado)
+        data_play.append("Seguidores de facebook: ")
+        data_play.append(resultado)
 
     #obtener toda la informacion desde twitter
     url_twitter = obtener_url_twitter(lista_redes_sociales)
     if url_twitter is None:
+        data_play.append("Esta empresa no tiene pagina de twitter")
         print("Esta empresa no tiene pagina de twitter")
     else:
         xpath_ejemplo = '/html/body/div[1]/div/div/div[2]/main/div/div/div/div[1]/div/div[3]/div/div/div/div/div[5]/div[2]/a/span[1]/span'
         resultado = await obtener_likes_con_xpath(url_twitter, xpath_ejemplo)
         print("seguidores twitter", resultado)
+        data_play.append("Seguidores de twitter: ")
+        data_play.append(resultado)
+
 
     #obtener toda la informacion desde youtube
     url_youtube = obtener_url_youtube(lista_redes_sociales)
     if url_youtube is None:
         print("Esta empresa no tiene canal de youtube")
+        data_play.append("Esta empresa no tiene canal de youtube")
     else:
         xpath_ejemplo = '//*[@id="subscriber-count"]'
         resultado = await obtener_likes_con_xpath(url_youtube, xpath_ejemplo)
         print("subs YT", resultado)
+        data_play.append("Suscriptores en YT: ")
+        data_play.append(resultado)
 
     #obtener toda la informacion desde linkedin
     url_linkedin = obtener_url_linkedin(lista_redes_sociales)
     if url_linkedin is None:
         print("Esta empresa no tiene pagina de linkedin")
+        data_play.append("Esta empresa no tiene pagina de linkedin")
     else:
         xpath_ejemplo = '/html/body/main/section[1]/section/div/div[2]/div[1]/h3'
         resultado = await obtener_likes_con_xpath(url_linkedin, xpath_ejemplo)
-        print("seguidores likedin", resultado)
+        print("seguidores likedin", resultado) 
+        data_play.append("Seguidores de linkedin: ")
+        data_play.append(resultado)
+
+
+    return data_play
+
+def enviar_a_redis_rsmq(informacion):
+    data = {"data": informacion}
+    response = requests.post(node_url, json=data)
+
+app = Flask(__name__)
+
+
+@app.route('/data_web', methods=['POST'])
+def data_web():
+    data = request.get_json()
+    url = data['url']
+    informacion = asyncio.run(init(url))
+    
+    # Enviar la información a Redis RSMQ
+    informacion = "\n".join(informacion)
+    enviar_a_redis_rsmq(informacion)
+    return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
 
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    app.run(debug=True, host='0.0.0.0', port=5050)
