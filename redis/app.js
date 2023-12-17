@@ -3,8 +3,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const RedisSMQ = require('rsmq');
 const PDFDocument = require('pdfkit');
+const axios = require('axios');
 const fs = require('fs');
 const cors = require('cors');
+
 const app = express();
 const port = 6000;
 /*const nombreContenedor = "so1-p1f1_201900822-nodejs_app-1"
@@ -118,6 +120,38 @@ async function generarPDFPlay(datos, informacion) {
   return pdfFileName;
 }
 
+
+
+
+
+app.post('/send_data',(req,res)=>{
+  const data = req.body;
+  var url = data['url']
+  
+  const dataSend= {
+    url: url
+  }
+
+  axios.post('http://172.20.0.3:5050/data_web',dataSend)
+  .then((response)=>{
+    console.log(response.data)
+  })
+  .catch((error)=>{
+    console.log(error)
+  })
+
+  axios.post('http://172.20.0.2:5000/data_web',dataSend)
+  .then((response)=>{
+    console.log(response.data)
+  })
+  .catch((error)=>{
+    console.log(error)
+  })
+
+
+  res.status(200).send('Información recibida correctamente');
+    
+})
 
 
 
