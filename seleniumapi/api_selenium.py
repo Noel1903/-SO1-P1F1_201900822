@@ -96,47 +96,6 @@ def obtener_seguidores_twitter(url):
     return likes_text
 
 
-
-#Metodo para obtener los seguidores de instagram
-'''def obtener_seguidores_instagram(url):
-    print("Selenium")
-    options = Options()
-    options.add_argument('--headless') 
-    driver = webdriver.Firefox(options=options)
-    driver.get(url)
-
-    # Espera hasta que el elemento que contiene la información de seguidores sea visible
-    try:
-        time.sleep(3)
-        element = WebDriverWait(driver, 5).until(
-            EC.visibility_of_element_located((By.XPATH, "//a[contains(@href,'/followers/')]/span"))
-        )
-    except Exception as e:
-        print(f"No se pudo encontrar el elemento: {e}")
-        driver.quit()
-        return None
-
-    # Haz clic en el elemento para cargar la página de seguidores
-    element.click()
-
-    # Espera hasta que se cargue la página de seguidores
-    try:
-        followers_element = WebDriverWait(driver, 5).until(
-            EC.visibility_of_element_located((By.XPATH, "//ul[@class='jSC57  _6xe7A']/li[2]//span"))
-        )
-    except Exception as e:
-        print(f"No se pudo encontrar la información de seguidores: {e}")
-        driver.quit()
-        return None
-
-    # Obtiene el texto que contiene la cantidad de seguidores
-    seguidores_text = followers_element.text
-
-    driver.quit()
-    return seguidores_text'''
-
-
-
 #Metodo para obtener los likes de facebook
 def obtener_likes_facebook(url):
     print("Selenium")
@@ -243,8 +202,8 @@ def data_web():
     redes_sociales_selenium = obtener_redes_sociales_selenium(url)
     print("Redes sociales (Selenium):", redes_sociales_selenium)
     # Enviar la información a Redis RSMQ
-    informacion = "\n".join(redes_sociales_selenium)
-    enviar_a_redis_rsmq(informacion)
+    """ informacion = "\n".join(redes_sociales_selenium)
+    enviar_a_redis_rsmq(informacion) """
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
 
 
