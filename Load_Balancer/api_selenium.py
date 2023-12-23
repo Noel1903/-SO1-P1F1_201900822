@@ -7,7 +7,6 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from flask import Flask,request
 import json
-import subprocess
 import re,time
 #import redis
 #from rsmq import RedisSMQ
@@ -95,6 +94,47 @@ def obtener_seguidores_twitter(url):
 
     driver.quit()
     return likes_text
+
+
+
+#Metodo para obtener los seguidores de instagram
+'''def obtener_seguidores_instagram(url):
+    print("Selenium")
+    options = Options()
+    options.add_argument('--headless') 
+    driver = webdriver.Firefox(options=options)
+    driver.get(url)
+
+    # Espera hasta que el elemento que contiene la información de seguidores sea visible
+    try:
+        time.sleep(3)
+        element = WebDriverWait(driver, 5).until(
+            EC.visibility_of_element_located((By.XPATH, "//a[contains(@href,'/followers/')]/span"))
+        )
+    except Exception as e:
+        print(f"No se pudo encontrar el elemento: {e}")
+        driver.quit()
+        return None
+
+    # Haz clic en el elemento para cargar la página de seguidores
+    element.click()
+
+    # Espera hasta que se cargue la página de seguidores
+    try:
+        followers_element = WebDriverWait(driver, 5).until(
+            EC.visibility_of_element_located((By.XPATH, "//ul[@class='jSC57  _6xe7A']/li[2]//span"))
+        )
+    except Exception as e:
+        print(f"No se pudo encontrar la información de seguidores: {e}")
+        driver.quit()
+        return None
+
+    # Obtiene el texto que contiene la cantidad de seguidores
+    seguidores_text = followers_element.text
+
+    driver.quit()
+    return seguidores_text'''
+
 
 
 #Metodo para obtener los likes de facebook
@@ -195,25 +235,6 @@ def enviar_a_redis_rsmq(informacion):
 
 
 
-@app.route('/ram', methods=['GET'])
-def ram():
-    resultado = subprocess.run(['free', '-m'], capture_output=True, text=True)
-    return resultado.stdout
-
-@app.route('/disco', methods=['GET'])
-def cpu():
-    return subprocess.check_output(['df','-h']).decode('utf-8')
-
-@app.route('/procesador', methods=['GET'])
-def process():
-    return subprocess.check_output(['ps', '-e', '-o', '%cpu']).decode('utf-8')
-    
-
-@app.route('/red', methods=['GET'])
-def red():
-    return subprocess.check_output(['ip', 'a','show', 'eth0']).decode('utf-8')
-
-
 
 @app.route('/data_web', methods=['POST'])
 def data_web():
@@ -222,33 +243,9 @@ def data_web():
     redes_sociales_selenium = obtener_redes_sociales_selenium(url)
     print("Redes sociales (Selenium):", redes_sociales_selenium)
     # Enviar la información a Redis RSMQ
-    """ informacion = "\n".join(redes_sociales_selenium)
-    enviar_a_redis_rsmq(informacion) """
+    informacion = "\n".join(redes_sociales_selenium)
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
 
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-'''
-#url_pagina = "https://www.coca-cola.com/es/es/"
-url_pagina = "https://www.nike.com/es/"
-redes_sociales_selenium = obtener_redes_sociales_selenium(url_pagina)
-print("Redes sociales (Selenium):", redes_sociales_selenium)
- # Enviar la información a Redis RSMQ
-informacion = "\n".join(redes_sociales_selenium)
-enviar_a_redis_rsmq(informacion)'''
-'''
-url_pagina = "https://www.bayer.com/"
-redes_sociales_selenium = obtener_redes_sociales_selenium(url_pagina)
-print("Redes sociales (Selenium):", redes_sociales_selenium)
- # Enviar la información a Redis RSMQ
-informacion = "\n".join(redes_sociales_selenium)
-enviar_a_redis_rsmq(informacion)
-url_pagina = "https://www.tacobell.com.gt/index.html"
-redes_sociales_selenium = obtener_redes_sociales_selenium(url_pagina)
-print("Redes sociales (Selenium):", redes_sociales_selenium)
-# Enviar la información a Redis RSMQ
-informacion = "\n".join(redes_sociales_selenium)
-enviar_a_redis_rsmq(informacion)'''
-

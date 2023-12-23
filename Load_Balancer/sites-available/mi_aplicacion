@@ -1,0 +1,30 @@
+upstream flask_servers {
+    server 172.20.0.2:5000;
+    server 172.20.0.3:5050;
+}
+
+server {
+    listen 80;
+    server_name localhost;
+
+    location /data_web {
+        proxy_pass http://flask_servers;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /static {
+        alias /ruta/a/tu/static/folder;  # Ruta a tu carpeta static
+    }
+
+    location /media {
+        alias /ruta/a/tu/media/folder;  # Ruta a tu carpeta media
+    }
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}

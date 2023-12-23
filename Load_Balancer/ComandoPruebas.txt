@@ -1,0 +1,3 @@
+ab -n 50 -c 5 -p data_post.json -T "application/json" -s 120 http://localhost/data_web > informeBalanceador.txt
+ab -n 50 -c 5 -p datos_post.json -T "application/json" -s 120 http://172.20.0.3:5050/data_web > informePlay.txt
+ab -n 50 -c 5 -p datos_post.json -T "application/json" -s 120 http://172.20.0.2:5000/data_web > informeSelenium.txt
