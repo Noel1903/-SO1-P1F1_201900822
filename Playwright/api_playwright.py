@@ -3,8 +3,10 @@ import asyncio
 import requests,json
 from playwright.async_api import async_playwright
 from flask import Flask, request, jsonify
+import redis
 
-node_url = 'http://nodejs_app:6000/data_play'
+redis_connection = redis.StrictRedis(host='172.20.0.5', port=6379, decode_responses=True)
+node_url = 'http://172.17.0.1:3000/data_play'
 
 def urlSearch(pagina,lista):
         for url in lista:
@@ -84,6 +86,10 @@ async def init(url):
     return data_play
 
 def enviar_a_redis_rsmq(informacion):
+    queue_name = 'proyecto'
+
+    # Enviar mensaje a la cola
+    redis_connection.lpush(queue_name, json.dumps(informacion))
     data = {"data": informacion}
     response = requests.post(node_url, json=data)
 
@@ -94,12 +100,17 @@ def data_web():
     data = request.get_json()
     url = data['url']
     informacion = asyncio.run(init(url))
-    
-    print("\ninformacion: \n",informacion)
-    # Enviar la información a Redis RSMQ
-    """ informacion = "\n".join(informacion)
-    enviar_a_redis_rsmq(informacion) """
-    return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    enviar_a_redis_rsmq(informacion)
+    #return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    respuesta_python = redis_connection.brpop('proyecto', timeout=60)
+    if respuesta_python:
+        respuesta_python = json.loads(respuesta_python[1])
+        print('Respuesta de Node.js:', respuesta_python)
+    else:
+        print('No hay respuesta de Node.js')
+
+    return json.dumps({'success': True, 'respuesta_python': respuesta_python}), 200, {'ContentType': 'application/json'}
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5050)

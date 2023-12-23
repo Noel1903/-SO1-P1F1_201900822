@@ -1,31 +1,24 @@
-// Aplicación Node.js (app.js)
-const express = require('express');
-const bodyParser = require('body-parser');
-const RedisSMQ = require('rsmq');
-const PDFDocument = require('pdfkit');
 const axios = require('axios');
+const express = require('express');
+const RedisSMQ = require('rsmq');
+const bodyParser = require('body-parser');
 const fs = require('fs');
 const cors = require('cors');
 const os = require('os');
-const {exec} = require('child_process');
+//const {exec} = require('child_process');
 const Docker = require('dockerode');
 const diskusage = require('diskusage');
-const netstat = require('node-netstat');
-const ssdp = require('node-ssdp').Client;
 const osUtils = require('os-utils');
+const crypto = require('crypto');
 const docker = new Docker();
+
 
 const app = express();
 const port = 3000;
-/*const nombreContenedor = "so1-p1f1_201900822-nodejs_app-1"
-const pdf_selenium = "/app/informe_selenium.pdf"
-// Configuración de Redis RSMQ
+//Conexion para contenedor de  redis
+const rsmq = new RedisSMQ({ host: '172.20.0.5', port: 6379 });
 
-// Comando para obtener el contenido de los archivos
-const comando = `sudo docker cp ${nombreContenedor}: ${pdf_selenium} /reports`;*/
-const rsmq = new RedisSMQ({ host: '172.17.0.2', port: 6379 });
-//list_data = []
-// Middleware para parsear el cuerpo de las solicitudes como JSON
+
 
   
 //app.options('/receive-data', cors());
@@ -36,22 +29,43 @@ app.use(bodyParser.json());
 app.use(express.json());
 app.use(cors());
 
+
+const queueName = 'proyecto';
+//son 32 caracteres de encriptacion
+const claveEncriptacion = `%=Pma.f.:g%7f4Z+H_8j:w@S)WquS-B,`;
+
+
+function encryptData(data) {
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(claveEncriptacion, 'utf-8'), iv);
+  const encryptedData = Buffer.concat([cipher.update(JSON.stringify(data), 'utf-8'), cipher.final()]);
+  return { iv: iv.toString('hex'), encryptedData: encryptedData.toString('hex') };
+}
+
+// Verificar si la cola existe, si no, créala
+rsmq.createQueue({ qname: queueName }, (err, resp) => {
+  if (err && err.name !== 'queueExists') {
+    console.error('Error al crear la cola en RSMQ:', err);
+  } else {
+    console.log('Cola creada o ya existente en RSMQ');
+  }
+});
+
 // Ruta para recibir información de Python y procesarla
 app.post('/data_selenium', async (req, res) => {
   try {
     const informacion = req.body.data;
-
-    // Enviar información a RSMQ
-    const queueName = 'proyecto'; // Reemplaza con el nombre de tu cola en RSMQ
-    const message = JSON.stringify(informacion);
-
-    rsmq.sendMessage({ qname: queueName, message }, (err, resp) => {
+    //console.log(informacion);
+    const mensajeEncriptado = encryptData(informacion);
+    console.log(mensajeEncriptado);
+    // Enviar mensaje a la cola
+    rsmq.sendMessage({ qname: queueName, message: JSON.stringify(mensajeEncriptado) }, (err, resp) => {
       if (err) {
         console.error('Error al enviar mensaje a RSMQ:', err);
         res.status(500).send('Error interno del servidor');
       } else {
         console.log('Mensaje enviado a RSMQ:', resp);
-        res.status(200).send('Información recibida correctamente');
+        res.status(200).json({ success: true });
       }
     });
   } catch (error) {
@@ -65,18 +79,17 @@ app.post('/data_selenium', async (req, res) => {
 app.post('/data_play', async (req, res) => {
   try {
     const informacion = req.body.data;
-
-    // Enviar información a RSMQ
-    const queueName = 'proyecto'; // Reemplaza con el nombre de tu cola en RSMQ
-    const message = JSON.stringify(informacion);
-
-    rsmq.sendMessage({ qname: queueName, message }, (err, resp) => {
+    //console.log(informacion);
+    const mensajeEncriptado = encryptData(informacion);
+    console.log(mensajeEncriptado);
+    // Enviar mensaje a la cola
+    rsmq.sendMessage({ qname: queueName, message: JSON.stringify(mensajeEncriptado) }, (err, resp) => {
       if (err) {
         console.error('Error al enviar mensaje a RSMQ:', err);
         res.status(500).send('Error interno del servidor');
       } else {
         console.log('Mensaje enviado a RSMQ:', resp);
-        res.status(200).send('Información recibida correctamente');
+        res.status(200).json({ success: true });
       }
     });
   } catch (error) {
@@ -141,38 +154,6 @@ async function generarPDFPlay(datos, informacion) {
 
 
 
-
-
-app.post('/send_data',(req,res)=>{
-  const data = req.body;
-  var url = data['url']
-  
-  const dataSend= {
-    url: url
-  }
-
-  axios.post('http://172.20.0.3:5050/data_web',dataSend)
-  .then((response)=>{
-    console.log(response.data)
-  })
-  .catch((error)=>{
-    console.log(error)
-  })
-
-  axios.post('http://172.20.0.2:5000/data_web',dataSend)
-  .then((response)=>{
-    console.log(response.data)
-  })
-  .catch((error)=>{
-    console.log(error)
-  })
-
-
-  res.status(200).send('Información recibida correctamente');
-    
-})
-
-
 app.post('/docker/selenium',async(req,res)=>{
   const data = req.body;
   var type = data['type']
@@ -199,7 +180,6 @@ app.get('/docker',async(_,res)=>{
   //const container = docker.getContainer('so1-p1f1_201900822-python_app-1')
   const containerPromises = containerNames.map(async (containerName) => {
     const container = docker.getContainer(containerName);
-    console.log(containerName,"nombre de contenedor")
     return new Promise((resolve, reject) => {
       container.stats({ stream: false }, (err, stats) => {
         if (err) {
@@ -239,14 +219,14 @@ app.get('/docker',async(_,res)=>{
   const containerInfos = await Promise.all(containerPromises);
 
   // Mostrar la información de todos los contenedores
-  containerInfos.forEach((containerInfo) => {
+  /*containerInfos.forEach((containerInfo) => {
     console.log(`Información del contenedor ${containerInfo.name}:`);
     console.log(`CPU%: ${containerInfo.cpuPercentage}%`);
     console.log(`RAM: ${containerInfo.ramUsage / (1024 * 1024)}MB / LIMIT ${containerInfo.memLimit / (1024 * 1024 * 1024)}GB`);
     console.log(`MEM%: ${containerInfo.memPercentage}%`);
     console.log(`NET: ${containerInfo.netIO}`);
     console.log();
-  });
+  });*/
   const result = {
     containers: containerInfos,
     timestamp: new Date().toISOString(),
@@ -284,7 +264,7 @@ app.get('/docker/playwright',async(_,res)=>{
   //const container = docker.getContainer('so1-p1f1_201900822-python_app-1')
   const containerPromises = containerNames.map(async (containerName) => {
     const container = docker.getContainer(containerName);
-    console.log(containerName,"nombre de contenedor")
+    
     return new Promise((resolve, reject) => {
       container.stats({ stream: false }, (err, stats) => {
         if (err) {
@@ -324,14 +304,14 @@ app.get('/docker/playwright',async(_,res)=>{
   const containerInfos = await Promise.all(containerPromises);
 
   // Mostrar la información de todos los contenedores
-  containerInfos.forEach((containerInfo) => {
+  /*containerInfos.forEach((containerInfo) => {
     console.log(`Información del contenedor ${containerInfo.name}:`);
     console.log(`CPU%: ${containerInfo.cpuPercentage}%`);
     console.log(`RAM: ${containerInfo.ramUsage / (1024 * 1024)}MB / LIMIT ${containerInfo.memLimit / (1024 * 1024 * 1024)}GB`);
     console.log(`MEM%: ${containerInfo.memPercentage}%`);
     console.log(`NET: ${containerInfo.netIO}`);
     console.log();
-  });
+  });*/
   const result = {
     containers: containerInfos,
     timestamp: new Date().toISOString(),
@@ -370,7 +350,7 @@ app.get('/docker/redis',async(_,res)=>{
   //const container = docker.getContainer('so1-p1f1_201900822-python_app-1')
   const containerPromises = containerNames.map(async (containerName) => {
     const container = docker.getContainer(containerName);
-    console.log(containerName,"nombre de contenedor")
+    
     return new Promise((resolve, reject) => {
       container.stats({ stream: false }, (err, stats) => {
         if (err) {
@@ -410,14 +390,14 @@ app.get('/docker/redis',async(_,res)=>{
   const containerInfos = await Promise.all(containerPromises);
 
   // Mostrar la información de todos los contenedores
-  containerInfos.forEach((containerInfo) => {
+ /*containerInfos.forEach((containerInfo) => {
     console.log(`Información del contenedor ${containerInfo.name}:`);
     console.log(`CPU%: ${containerInfo.cpuPercentage}%`);
     console.log(`RAM: ${containerInfo.ramUsage / (1024 * 1024)}MB / LIMIT ${containerInfo.memLimit / (1024 * 1024 * 1024)}GB`);
     console.log(`MEM%: ${containerInfo.memPercentage}%`);
     console.log(`NET: ${containerInfo.netIO}`);
     console.log();
-  });
+  });*/
   const result = {
     containers: containerInfos,
     timestamp: new Date().toISOString(),
@@ -473,9 +453,7 @@ app.get('/recursos', async (req, res) => {
 });
 
 
-
-
-// Iniciar el servidor
 app.listen(port, () => {
-  console.log(`Servidor Node.js escuchando en http://localhost:${port}`);
-});
+  console.log(`Servidor escuchando en http://localhost:${port}`);
+}
+);
