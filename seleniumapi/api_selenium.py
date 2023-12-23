@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from flask import Flask,request
 import json
+import subprocess
 import re,time
 #import redis
 #from rsmq import RedisSMQ
@@ -233,6 +234,25 @@ def enviar_a_redis_rsmq(informacion):
     #redis_client.set("mi_clave", informacion)
     #print("Información almacenada directamente en Redis.")
 
+
+
+@app.route('/ram', methods=['GET'])
+def ram():
+    resultado = subprocess.run(['free', '-m'], capture_output=True, text=True)
+    return resultado.stdout
+
+@app.route('/disco', methods=['GET'])
+def cpu():
+    return subprocess.check_output(['df','-h']).decode('utf-8')
+
+@app.route('/procesador', methods=['GET'])
+def process():
+    return subprocess.check_output(['ps', '-e', '-o', '%cpu']).decode('utf-8')
+    
+
+@app.route('/red', methods=['GET'])
+def red():
+    return subprocess.check_output(['ip', 'a','show', 'eth0']).decode('utf-8')
 
 
 
