@@ -8,12 +8,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from flask import Flask,request
 import json
 import re,time
-#import redis
+import redis
 #from rsmq import RedisSMQ
 app = Flask(__name__)
 
-
-node_url = 'http://nodejs_app:6000/data_selenium'
+redis_connection = redis.StrictRedis(host='172.20.0.5', port=6379, decode_responses=True)
+node_url = 'http://172.17.0.1:3000/data_selenium'
 
 pattern_facebook = re.compile(r'^https?://(?:www\.)?facebook\.com/[a-zA-Z0-9.]+/?$')
 pattern_twitter = re.compile(r'^https?://(?:www\.)?twitter\.com/[a-zA-Z0-9_]+/?$')
@@ -184,6 +184,12 @@ def obtener_redes_sociales_selenium(url):
         return []
 
 def enviar_a_redis_rsmq(informacion):
+    '''data = {"data": informacion}
+    response = requests.post(node_url, json=data)'''
+    queue_name = 'proyecto'
+
+    # Enviar mensaje a la cola
+    redis_connection.lpush(queue_name, json.dumps(informacion))
     data = {"data": informacion}
     response = requests.post(node_url, json=data)
     #print(response.text)
@@ -202,9 +208,18 @@ def data_web():
     redes_sociales_selenium = obtener_redes_sociales_selenium(url)
     print("Redes sociales (Selenium):", redes_sociales_selenium)
     # Enviar la información a Redis RSMQ
-    """ informacion = "\n".join(redes_sociales_selenium)
-    enviar_a_redis_rsmq(informacion) """
-    return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    informacion = "\n".join(redes_sociales_selenium)
+    enviar_a_redis_rsmq(informacion)
+    #return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    respuesta_python = redis_connection.brpop('proyecto', timeout=60)
+    if respuesta_python:
+        respuesta_python = json.loads(respuesta_python[1])
+        print('Respuesta de Node.js:', respuesta_python)
+    else:
+        print('No hay respuesta de Node.js')
+
+    return json.dumps({'success': True, 'respuesta_python': respuesta_python}), 200, {'ContentType': 'application/json'}
+
 
 
 if __name__ == '__main__':

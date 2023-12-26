@@ -19,17 +19,7 @@ services:
     networks:
       mi_red:
         ipv4_address: 172.20.0.3
-  nodejs_app:
-    build:
-      context: .
-      dockerfile: ./redis/Dockerfile
-    ports:
-      - "6000:6000"
-    depends_on:
-      - redis
-    networks:
-      mi_red:
-        ipv4_address: 172.20.0.4
+  
    
   redis:
     image: "redis:latest"
