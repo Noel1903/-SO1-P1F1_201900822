@@ -1,0 +1,10 @@
+****************************************
+1. Pablo Rufino Quevedo Berdúo
+    Ajusto el rendimiento de las APIS.
+****************************************
+2. Osmar Noel Chacón Lemus
+    Dockerizo el load balancer.
+*****************************************
+3. Brandon Mauricio Noj Romero
+    Creación del load balancer y pruebas.
+****************************************

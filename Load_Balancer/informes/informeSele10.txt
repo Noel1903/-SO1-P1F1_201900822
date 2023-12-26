@@ -1,0 +1,2 @@
+mauricio@mauricio-Inspiron-3505:~/Escritorio/Proyecto_Sopes1/-SO1-P1F1_201900822/Load_Balancer$ ab -n 100 -c 10 -p datos_post.json -T "application/json" -s 120 http://172.20.0.2:5000/data_web > informeSelenium.txt
+apr_pollset_poll: The timeout specified has expired (70007)
